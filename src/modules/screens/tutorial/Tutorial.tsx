@@ -108,12 +108,6 @@ const Tutorial = ({ visible = true, tutorialSlides, onPrompt, onFirstTutorialSli
   const [scrolling, setScrolling] = useState(false);
   const carouselRef = useRef<Carousel<TutorialSlide> | null>(null);
 
-  // UNSAFE_componentWillReceiveProps(nextProps) {
-  //   if (visible && !nextProps.visible) {
-  //     carouselRef.current?.snapToItem(0);
-  //   }
-  // }
-
   useEffect(() => {
     console.log('carouselRef:', carouselRef)
     if (!visible) carouselRef.current?.snapToItem(0);
@@ -131,16 +125,17 @@ const Tutorial = ({ visible = true, tutorialSlides, onPrompt, onFirstTutorialSli
   //   this.setState({ activeIndex }, this._stoppedScrolling);
   // };
 
-  const onPrevious = () => {
+  const handlePrevious = async () => {
     if (!scrolling) {
       setScrolling(true);
-      carouselRef.current?.snapToItem(activeIndex - 1);
+      await carouselRef.current?.snapToItem(activeIndex - 1);
       setActiveIndex(activeIndex - 1);
       setScrolling(false)
     }
   };
 
-  const onNext = () => {
+
+  const handleNext = () => {
     console.log('next..')
     console.log('activeIndex:', activeIndex)
     // if (activeIndex === 0) {
@@ -172,7 +167,7 @@ const Tutorial = ({ visible = true, tutorialSlides, onPrompt, onFirstTutorialSli
       promptForLocationAccess={item.promptForLocationAccess}
       promptForPushNotifications={item.promptForPushNotifications}
       onPrompt={onPrompt}
-      onNext={onNext}
+      onNext={handleNext}
       showConsentText={index === 0}
     />
   );
@@ -187,39 +182,24 @@ const Tutorial = ({ visible = true, tutorialSlides, onPrompt, onFirstTutorialSli
     </TouchableOpacity>
   );
 
-  const renderLeftArrow = () => {
-    if (activeIndex === 0) {
-      return <View style={styles.arrowPlaceHolder} />;
-    }
+  const renderArrow = (direction: string) => {
+    const isLeft = direction === 'left';
+    const isDisabled = 
+      (isLeft && activeIndex === 0) || (!isLeft && activeIndex === tutorialSlides.length - 1);
+
+    if (isDisabled) return <View style={styles.arrowPlaceHolder} />;
+
     return (
       <View>
         <TouchableOpacity
           style={styles.arrowContainer}
-          onPress={onPrevious}
-          testID="left-arrow"
+          onPress={isLeft ? handlePrevious : handleNext}
+          testID={`${direction}-arrow`}
         >
           <Image
             source={images.arrow}
-            style={[styles.arrow, styles.leftArrow]}
+            style={[styles.arrow, isLeft && styles.leftArrow]}
             resizeMode="contain"
-          />
-        </TouchableOpacity>
-      </View>
-    );
-  };
-
-  const renderRightArrow = () => {
-    if (activeIndex === tutorialSlides.length - 1) {
-      return <View style={styles.arrowPlaceHolder} />;
-    }
-    return (
-      <View>
-        <TouchableOpacity style={styles.arrowContainer} onPress={onNext}>
-          <Image
-            source={images.arrow}
-            style={styles.arrow}
-            resizeMode="contain"
-            testID="left-arrow"
           />
         </TouchableOpacity>
       </View>
@@ -248,7 +228,7 @@ const Tutorial = ({ visible = true, tutorialSlides, onPrompt, onFirstTutorialSli
     }
     return (
       <View style={styles.bottomContainer} pointerEvents="box-none">
-        {renderLeftArrow()}
+        {renderArrow('left')}
         <View style={styles.paginationContainer} pointerEvents="none">
           <Pagination
             dotContainerStyle={styles.dotContainerStyle}
@@ -261,7 +241,7 @@ const Tutorial = ({ visible = true, tutorialSlides, onPrompt, onFirstTutorialSli
             dotStyle={styles.dot}
           />
         </View>
-        {renderRightArrow()}
+        {renderArrow('right')}
       </View>
     );
   };
