@@ -25,6 +25,7 @@ import { connect } from "react-redux";
 const { width: viewportWidth, height: viewportHeight } =
   Dimensions.get("window");
 
+// put in consts file
 const dotWidth = 10;
 const dotHorizontalMargin = 2.5;
 const isHeightSimilarToiPhoneOrSmaller = viewportHeight < 600;
@@ -82,10 +83,12 @@ const styles = StyleSheet.create({
   },
 });
 
+// put in consts file
 const strings = {
   skip: "Skip",
 };
 
+// import not require
 const images = {
   arrow: require("../../../../assets/images/arrow-right-white-big.png"),
 };
@@ -108,7 +111,6 @@ const Tutorial = ({ visible = true, tutorialSlides, onPrompt, onFirstTutorialSli
   const carouselRef = useRef<Carousel<TutorialSlide> | null>(null);
   
   useEffect(() => {
-    console.log('carouselRef:', carouselRef)
     if (!visible) {
       carouselRef.current?.snapToItem(0);
       setActiveIndex(0);
@@ -134,9 +136,7 @@ const Tutorial = ({ visible = true, tutorialSlides, onPrompt, onFirstTutorialSli
     }
   }, [activeIndex])
 
-
   const handleNext = useCallback(() => {
-
     if (activeIndex < tutorialSlides.length - 1) {
       if (activeIndex ===  0) {
         onFirstTutorialSlideNextAction();
@@ -250,6 +250,7 @@ const Tutorial = ({ visible = true, tutorialSlides, onPrompt, onFirstTutorialSli
             tutorialSlides[activeIndex].backgroundColor,
         }
       : null;
+  
   return (
     <FullScreenModal
       visible={visible}
