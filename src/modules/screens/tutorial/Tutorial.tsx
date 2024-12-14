@@ -4,11 +4,9 @@ import * as Animatable from "react-native-animatable";
 import * as color from "../../../constants/color";
 import * as devices from "../../../constants/devices";
 import * as fontSizes from "../../../constants/fontSizes";
-import * as customPropTypes from "../../../constants/customPropTypes";
 import Carousel, { Pagination } from "react-native-snap-carousel";
 import FullScreenModal from "../../modal_layout/FullScreenModal";
 import { LinearGradient } from "expo-linear-gradient";
-import PropTypes from "prop-types";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import StyledText from "../../controls/StyledText";
 import TutorialSlide from "./TutorialSlide";
@@ -21,6 +19,29 @@ import {
   View,
 } from "react-native";
 import { connect } from "react-redux";
+
+type TutorialProps = {
+  visible?: boolean;
+  tutorialSlides: TutorialSlide[];
+  onPrompt: (promptForLocationAccess: boolean, promptForPushNotifications: boolean) => void;
+  onFirstTutorialSlideNextAction: () => void;
+};
+
+type TutorialSlide = {
+  buttonLabel: string;
+  backgroundColor: string;
+  description: string;
+  image1xUrl: string;
+  image2xUrl?: string | undefined;
+  image3xUrl?: string | undefined;
+  name: string;
+  promptForLocationAccess: boolean;
+  promptForPushNotifications: boolean;
+};
+
+type MapStateToProps = {
+  visible: boolean;
+};
 
 const { width: viewportWidth, height: viewportHeight } =
   Dimensions.get("window");
@@ -98,15 +119,12 @@ const gradientLocations = [0, 1.0];
 const gradientStart = { x: 0.5, y: 0 };
 const gradientEnd = { x: 1, y: 1 };
 
-type TutorialSlide = {
-  buttonLabel: string,
-  backgroundColor: string,
-  description: string,
-  image1xUrl: string,
-  name: string,
-}
-
-const Tutorial = ({ visible = true, tutorialSlides, onPrompt, onFirstTutorialSlideNextAction }) => {
+const Tutorial: React.FC<TutorialProps> = ({ 
+  visible = true, 
+  tutorialSlides, 
+  onPrompt, 
+  onFirstTutorialSlideNextAction 
+}) => {
   const [currentSlide, setCurrentSlide] = useState<number>(0);
   const [isScrolling, setIsScrolling] = useState<boolean>(false);
   const carouselRef = useRef<Carousel<TutorialSlide> | null>(null);
@@ -154,14 +172,15 @@ const Tutorial = ({ visible = true, tutorialSlides, onPrompt, onFirstTutorialSli
 
   const onSkipTutorial = () => onPrompt(true, true, true);
 
-  const renderItem = useCallback(({ item, index }) => (
+  const renderItem = useCallback(
+    ({ item, index }: { item: TutorialSlide; index: number }) => (
     <TutorialSlide
       buttonLabel={item.buttonLabel}
       color={item.backgroundColor}
       description={item.description}
       image1xUrl={item.image1xUrl}
-      image2xUrl={item.image2xUrl}
-      image3xUrl={item.image3xUrl}
+      image2xUrl={item?.image2xUrl}
+      image3xUrl={item?.image3xUrl}
       index={index}
       shouldClose={index === tutorialSlides.length - 1}
       name={item.name}
@@ -291,26 +310,7 @@ const Tutorial = ({ visible = true, tutorialSlides, onPrompt, onFirstTutorialSli
   );
 };
 
-Tutorial.propTypes = {
-  visible: PropTypes.bool,
-  tutorialSlides: PropTypes.arrayOf(
-    PropTypes.shape({
-      buttonLabel: PropTypes.string,
-      backgroundColor: PropTypes.string,
-      description: PropTypes.string,
-      image1xUrl: PropTypes.string,
-    })
-  ),
-  onPrompt: PropTypes.func,
-  onFirstTutorialSlideNextAction: PropTypes.func,
-};
-
-Tutorial.defaultProps = {
-  tutorialSlides: [],
-  visible: false,
-};
-
-const mapStateToProps = (state: any) => {
+const mapStateToProps = (state: any): MapStateToProps => {
   return {
     visible: state.tutorial.isVisible,
   };
