@@ -107,45 +107,50 @@ type TutorialSlide = {
 }
 
 const Tutorial = ({ visible = true, tutorialSlides, onPrompt, onFirstTutorialSlideNextAction }) => {
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [currentSlide, setCurrentSlide] = useState<number>(0);
+  const [isScrolling, setIsScrolling] = useState<boolean>(false);
   const carouselRef = useRef<Carousel<TutorialSlide> | null>(null);
   
   useEffect(() => {
     if (!visible) {
       carouselRef.current?.snapToItem(0);
-      setActiveIndex(0);
+      setCurrentSlide(0);
     }
   }, [visible]); 
 
-  // const setActiveIndex = (activeIndex) => {
-  //   if (activeIndex === activeIndex + 1) {
-  //     onPrompt(
-  //       tutorialSlides[activeIndex]
-  //         .promptForLocationAccess,
-  //       tutorialSlides[activeIndex]
-  //         .promptForPushNotifications
-  //     );
-  //   }
-  //   this.setState({ activeIndex }, this._stoppedScrolling);
-  // };
+  const setActiveIndex = (index: number) => {
+    if (index === currentSlide + 1) {
+      onPrompt(
+        tutorialSlides[currentSlide]
+          .promptForLocationAccess,
+        tutorialSlides[currentSlide]
+          .promptForPushNotifications
+      );
+    }
+    setCurrentSlide(index);
+    setIsScrolling(false);
+  };
 
   const handlePrevious = useCallback(() => {
-    if (activeIndex > 0) {
-      carouselRef.current?.snapToItem(activeIndex - 1);
-      setActiveIndex(activeIndex - 1);
+    if (currentSlide > 0 && !isScrolling) {
+      setIsScrolling(true);
+      carouselRef.current?.snapToItem(currentSlide - 1);
+      setActiveIndex(currentSlide - 1)
     }
-  }, [activeIndex])
+  }, [currentSlide])
 
   const handleNext = useCallback(() => {
-    if (activeIndex < tutorialSlides.length - 1) {
-      if (activeIndex ===  0) {
+    if (currentSlide < tutorialSlides.length - 1) {
+      if (currentSlide ===  0) {
         onFirstTutorialSlideNextAction();
-        setActiveIndex(activeIndex + 1);
       }
-      carouselRef.current?.snapToItem(activeIndex + 1);
-      setActiveIndex(activeIndex + 1);
+      if (!isScrolling) {
+        setIsScrolling(true);
+        carouselRef.current?.snapToItem(currentSlide + 1);
+        setActiveIndex(currentSlide + 1);
+      }
     }
-  }, [activeIndex, tutorialSlides.length, onFirstTutorialSlideNextAction]);
+  }, [currentSlide, tutorialSlides.length, onFirstTutorialSlideNextAction]);
 
   const onSkipTutorial = () => onPrompt(true, true, true);
 
@@ -181,7 +186,7 @@ const Tutorial = ({ visible = true, tutorialSlides, onPrompt, onFirstTutorialSli
   const renderArrow = useCallback((direction: string) => {
     const isLeft = direction === 'left';
     const isDisabled = 
-      (isLeft && activeIndex === 0) || (!isLeft && activeIndex === tutorialSlides.length - 1);
+      (isLeft && currentSlide === 0) || (!isLeft && currentSlide === tutorialSlides.length - 1);
 
     if (isDisabled) return <View style={styles.arrowPlaceHolder} />;
 
@@ -200,7 +205,7 @@ const Tutorial = ({ visible = true, tutorialSlides, onPrompt, onFirstTutorialSli
         </TouchableOpacity>
       </View>
     );
-  },[activeIndex, tutorialSlides.length, handleNext, handlePrevious]);
+  },[currentSlide, tutorialSlides.length, handleNext, handlePrevious]);
 
   const renderBottom = () => {
     if (!visible) {
@@ -213,10 +218,10 @@ const Tutorial = ({ visible = true, tutorialSlides, onPrompt, onFirstTutorialSli
       maxAllowed < tutorialSlides.length
         ? maxAllowed
         : tutorialSlides.length;
-    const activeDotIndex = activeIndex % dotsLength;
+    const activeDotIndex = currentSlide % dotsLength;
     if (
       tutorialSlides.length % maxAllowed !== 0 &&
-      activeIndex >=
+      currentSlide >=
         tutorialSlides.length -
           (tutorialSlides.length % maxAllowed)
     ) {
@@ -247,7 +252,7 @@ const Tutorial = ({ visible = true, tutorialSlides, onPrompt, onFirstTutorialSli
     tutorialSlides.length > 0
       ? {
           backgroundColor:
-            tutorialSlides[activeIndex].backgroundColor,
+            tutorialSlides[currentSlide].backgroundColor,
         }
       : null;
   
@@ -276,10 +281,10 @@ const Tutorial = ({ visible = true, tutorialSlides, onPrompt, onFirstTutorialSli
           renderItem={renderItem}
           sliderWidth={viewportWidth}
           itemWidth={viewportWidth}
-          onSnapToItem={(index) => setActiveIndex(index)}
-          scrollEnabled={activeIndex === 0 ? false : true}
+          onSnapToItem={setActiveIndex}
+          scrollEnabled={currentSlide === 0 ? false : true}
         />
-        {activeIndex !== 0 ? renderSkipButton() : null}
+        {currentSlide !== 0 ? renderSkipButton() : null}
         {renderBottom()}
       </Animatable.View>
     </FullScreenModal>
